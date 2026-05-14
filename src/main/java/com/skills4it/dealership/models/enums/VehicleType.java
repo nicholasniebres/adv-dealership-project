@@ -8,7 +8,8 @@ public enum VehicleType {
     CAR("Car"),
     TRUCK("Truck"),
     SUV("SUV"),
-    VAN("Van");
+    VAN("Van"),
+    ELECTRIC("Electric");
 
     private final String displayName;
 
