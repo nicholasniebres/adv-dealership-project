@@ -41,7 +41,7 @@ public class UserInterface {
     private void displayHeader() {
         System.out.println();
         System.out.println("=============================================");
-        System.out.println("Welcome to " + dealership.getName());
+        System.out.println("Welcome to the app: " + dealership.getName());
         System.out.println(dealership.getAddress() + " | " + dealership.getPhone());
         System.out.println("=============================================");
     }
