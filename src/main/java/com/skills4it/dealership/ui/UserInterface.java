@@ -1,8 +1,7 @@
 package com.skills4it.dealership.ui;
 
 import com.skills4it.dealership.data.DealershipFileManager;
-import com.skills4it.dealership.models.Dealership;
-import com.skills4it.dealership.models.Vehicle;
+import com.skills4it.dealership.models.*;
 import com.skills4it.dealership.models.enums.VehicleType;
 import com.skills4it.dealership.ui.enums.MenuOption;
 
@@ -69,8 +68,69 @@ public class UserInterface {
             case LIST_ALL -> processAllVehiclesRequest();
             case ADD_VEHICLE -> processAddVehicleRequest();
             case REMOVE_VEHICLE -> processRemoveVehicleRequest();
+            case CONTRACT_TYPE -> processSellLeaseRequest();
             case QUIT -> { }
         }
+    }
+
+    public void processSellLeaseRequest() {
+        Scanner scanner = new Scanner(System.in);
+
+        // Step 1: Find the vehicle
+        System.out.print("Enter the VIN of the vehicle to sell/lease: ");
+        String vin = scanner.nextLine();
+        Vehicle vehicle = dealership.removeVehicleByVin(vin); // Adjust based on your actual inventory method
+
+        if (vehicle == null) {
+            System.out.println("Vehicle not found.");
+            return;
+        }
+
+        // Step 2: Collect basic customer information
+        System.out.print("Enter contract date (YYYYMMDD): ");
+        String date = scanner.nextLine();
+        System.out.print("Enter customer name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter customer email: ");
+        String email = scanner.nextLine();
+
+        // Step 3: Ask if it's a Sale or Lease
+        System.out.print("Is this a SALE or LEASE? ");
+        String type = scanner.nextLine().trim().toUpperCase();
+
+        Contract contract = null;
+
+        if (type.equals("SALE")) {
+            System.out.print("Will this be financed? (yes/no): ");
+            boolean finance = scanner.nextLine().trim().equalsIgnoreCase("yes");
+
+            // Polymorphic assignment using the SalesContract class built
+            contract = new SalesContract(date, name, email, vehicle, finance);
+
+        } else if (type.equals("LEASE")) {
+            // Business Rule Check: Can't lease a vehicle over 3 years old
+            int currentYear = 2026; // Match your current program year
+            if ((currentYear - vehicle.getYear()) > 3) {
+                System.out.println("Error: Vehicles older than 3 years cannot be leased.");
+                return;
+            }
+
+            // Polymorphic assignment using the LeaseContract class built
+            contract = new LeaseContract(date, name, email, vehicle);
+
+        } else {
+            System.out.println("Invalid contract type.");
+            return;
+        }
+
+        // Step 4: Display calculated pricing to the user
+        System.out.println("\n--- Contract Summary ---");
+        System.out.printf("Total Price: $%.2f\n", contract.getTotalPrice());
+        System.out.printf("Monthly Payment: $%.2f\n", contract.getMonthlyPayment());
+
+        // Step 5: Remove vehicle from inventory & save contract (if required by your project)
+        dealership.removeVehicleByVin(String.valueOf(vehicle));
+        System.out.println("Transaction successfully recorded!");
     }
 
     private void processGetByPriceRequest() {
@@ -114,7 +174,7 @@ public class UserInterface {
     private void processAddVehicleRequest() {
         System.out.println("Add a new vehicle");
 
-        int vin = readPositiveInt("VIN: ");
+        String vin = scanner.nextLine();
         if (dealership.findVehicleByVin(vin).isPresent()) {
             System.out.println("A vehicle with this VIN already exists. Vehicle was not added.");
             return;
@@ -138,13 +198,13 @@ public class UserInterface {
     private void processRemoveVehicleRequest() {
         int vin = readPositiveInt("Enter VIN of vehicle to remove: ");
 
-        dealership.findVehicleByVin(vin).ifPresentOrElse(vehicle -> {
+        dealership.findVehicleByVin(String.valueOf(vin)).ifPresentOrElse(vehicle -> {
             System.out.println("Vehicle found:");
             displayVehicles(List.of(vehicle));
 
             String confirmation = readString("Remove this vehicle? yes/no: ");
             if (confirmation.equalsIgnoreCase("yes") || confirmation.equalsIgnoreCase("y")) {
-                dealership.removeVehicleByVin(vin);
+                dealership.removeVehicleByVin(String.valueOf(vin));
                 fileManager.saveDealership(dealership);
                 System.out.println("Vehicle removed and inventory saved.");
             } else {

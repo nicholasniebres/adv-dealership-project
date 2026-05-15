@@ -1,5 +1,10 @@
 package com.skills4it.dealership.ui;
 
+import com.skills4it.dealership.models.Contract;
+import com.skills4it.dealership.models.LeaseContract;
+import com.skills4it.dealership.models.SalesContract;
+import com.skills4it.dealership.models.Vehicle;
+
 import java.util.Scanner;
 
 public class Helper {

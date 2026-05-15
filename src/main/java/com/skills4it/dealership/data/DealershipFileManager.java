@@ -74,7 +74,7 @@ public class DealershipFileManager {
         }
 
         try {
-            int vin = Integer.parseInt(fields[0]);
+            String vin = String.valueOf(Integer.parseInt(fields[0]));
             int year = Integer.parseInt(fields[1]);
             String make = fields[2];
             String model = fields[3];

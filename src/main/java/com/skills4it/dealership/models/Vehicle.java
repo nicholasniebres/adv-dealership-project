@@ -5,7 +5,7 @@ import com.skills4it.dealership.models.enums.VehicleType;
 import java.util.Objects;
 
 public class Vehicle {
-    private int vin;
+    private String vin;
     private int year;
     private String make;
     private String model;
@@ -14,7 +14,7 @@ public class Vehicle {
     private int odometer;
     private double price;
 
-    public Vehicle(int vin, int year, String make, String model, VehicleType vehicleType, String color, int odometer, double price) {
+    public Vehicle(String vin, int year, String make, String model, VehicleType vehicleType, String color, int odometer, double price) {
         this.vin = vin;
         this.year = year;
         this.make = make;
@@ -25,11 +25,11 @@ public class Vehicle {
         this.price = price;
     }
 
-    public int getVin() {
+    public String getVin() {
         return vin;
     }
 
-    public void setVin(int vin) {
+    public void setVin(String vin) {
         this.vin = vin;
     }
 
@@ -103,7 +103,7 @@ public class Vehicle {
 
     @Override
     public String toString() {
-        return String.format("%-8d %-6d %-12s %-15s %-8s %-10s %,10d $%,10.2f",
+        return String.format("%s %-6d %-12s %-15s %-8s %-10s %,10d $%,10.2f",
                 vin, year, make, model, vehicleType.getDisplayName(), color, odometer, price);
     }
 

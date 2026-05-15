@@ -96,11 +96,22 @@ public class Dealership {
         inventory.add(vehicle);
     }
 
-    public boolean removeVehicleByVin(int vin) {
-        return inventory.removeIf(vehicle -> vehicle.getVin() == vin);
+    public Vehicle removeVehicleByVin(String vin) {
+        // 1. Loop through the collection manually
+        for (Vehicle vehicle : inventory) {
+            // 2. Use .equalsIgnoreCase() to match the text properly
+            if (vehicle.getVin().equalsIgnoreCase(vin)) {
+                // 3. Remove it from the list
+                inventory.remove(vehicle);
+                // 4. Return the removed vehicle object
+                return vehicle;
+            }
+        }
+        // Return null if no matching vehicle was found
+        return null;
     }
 
-    public Optional<Vehicle> findVehicleByVin(int vin) {
+    public Optional<Vehicle> findVehicleByVin(String vin) {
         return inventory.stream()
                 .filter(vehicle -> vehicle.getVin() == vin)
                 .findFirst();
