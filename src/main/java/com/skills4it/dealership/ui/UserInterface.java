@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.Scanner;
 
 public class UserInterface {
+
     private final Scanner scanner;
     private final DealershipFileManager fileManager;
     private Dealership dealership;
+    private static final String FILE_NAME = ("contracts.csv");
 
     public UserInterface() {
         this.scanner = new Scanner(System.in);
@@ -76,10 +78,10 @@ public class UserInterface {
     public void processSellLeaseRequest() {
         Scanner scanner = new Scanner(System.in);
 
-        // Step 1: Find the vehicle
+        // Step 1: Find and extract the vehicle immediately
         System.out.print("Enter the VIN of the vehicle to sell/lease: ");
         String vin = scanner.nextLine();
-        Vehicle vehicle = dealership.removeVehicleByVin(vin); // Adjust based on your actual inventory method
+        Vehicle vehicle = dealership.removeVehicleByVin(vin);
 
         if (vehicle == null) {
             System.out.println("Vehicle not found.");
@@ -98,28 +100,32 @@ public class UserInterface {
         System.out.print("Is this a SALE or LEASE? ");
         String type = scanner.nextLine().trim().toUpperCase();
 
+        // Creating an empty object from Contract superclass
         Contract contract = null;
 
         if (type.equals("SALE")) {
             System.out.print("Will this be financed? (yes/no): ");
             boolean finance = scanner.nextLine().trim().equalsIgnoreCase("yes");
 
-            // Polymorphic assignment using the SalesContract class built
+            // New object for using the specific perimeters to SaleContract subclass
             contract = new SalesContract(date, name, email, vehicle, finance);
 
         } else if (type.equals("LEASE")) {
-            // Business Rule Check: Can't lease a vehicle over 3 years old
-            int currentYear = 2026; // Match your current program year
+            int currentYear = 2026;
             if ((currentYear - vehicle.getYear()) > 3) {
                 System.out.println("Error: Vehicles older than 3 years cannot be leased.");
+                // Put the vehicle back into inventory if the lease deal fails validation
+                dealership.addVehicle(vehicle);
                 return;
             }
 
-            // Polymorphic assignment using the LeaseContract class built
+            // New object using specific parameters for LeaseContract sublass
             contract = new LeaseContract(date, name, email, vehicle);
 
         } else {
             System.out.println("Invalid contract type.");
+            // Put the vehicle back into inventory if an invalid type was typed
+            dealership.addVehicle(vehicle);
             return;
         }
 
@@ -128,9 +134,51 @@ public class UserInterface {
         System.out.printf("Total Price: $%.2f\n", contract.getTotalPrice());
         System.out.printf("Monthly Payment: $%.2f\n", contract.getMonthlyPayment());
 
-        // Step 5: Remove vehicle from inventory & save contract (if required by your project)
-        dealership.removeVehicleByVin(String.valueOf(vehicle));
-        System.out.println("Transaction successfully recorded!");
+        // Step 5: Direct BufferedWriter to the CSV file
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter("contracts.csv", true))) {
+
+            // Build common base data layout shared by both files
+            String baseData = String.format("%s|%s|%s|%s|%s|%d|%s|%s|%s|%s|%d|%.2f",
+                    type,
+                    contract.getContractDate(),
+                    contract.getCustomerName(),
+                    contract.getCustomerEmail(),
+                    vehicle.getVin(),
+                    vehicle.getYear(),
+                    vehicle.getMake(),
+                    vehicle.getModel(),
+                    vehicle.getVehicleType(),
+                    vehicle.getColor(),
+                    vehicle.getOdometer(),
+                    vehicle.getPrice()
+            );
+
+            String finalLine = "";
+
+            if (contract instanceof SalesContract) {
+                SalesContract sales = (SalesContract) contract;
+                double salesTax = vehicle.getPrice() * 0.05;
+                double processingFee = (vehicle.getPrice() < 10000) ? 295.00 : 495.00;
+                String financeOption = sales.isFinance() ? "YES" : "NO";
+
+                finalLine = String.format("%s|%.2f|100.00|%.2f|%.2f|%s|%.2f",
+                        baseData, salesTax, processingFee, sales.getTotalPrice(), financeOption, sales.getMonthlyPayment());
+
+            } else if (contract instanceof LeaseContract) {
+                LeaseContract lease = (LeaseContract) contract;
+
+                finalLine = String.format("%s|%.2f|%.2f|%.2f|%.2f",
+                        baseData, lease.getExpectedEndingValue(), lease.getLeaseFee(), lease.getTotalPrice(), lease.getMonthlyPayment());
+            }
+
+            // Output to CSV row
+            writer.write(finalLine);
+            writer.newLine();
+            System.out.println("Transaction successfully appended to file!");
+
+        } catch (java.io.IOException e) {
+            System.out.println("Critical Error writing contract row to CSV: " + e.getMessage());
+        }
     }
 
     private void processGetByPriceRequest() {
